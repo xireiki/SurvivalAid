@@ -1,9 +1,10 @@
 import * as MC from "mojang-minecraft";
-import * as GT from "mojang-gametest";
-// import * as UI from "mojang-minecraft-ui";
+import * as UI from "mojang-minecraft-ui";
+import { ui } from "./ui.js";
 
-var Commands = {
+export var Commands = {
   cancel: false,
+  data: {},
   help: {
     "help": [
       " [page: number]",
@@ -13,67 +14,64 @@ var Commands = {
   keyword: {},
   trigger: {},
   run: function(command, dimension = "overworld") {
-    return MC.world.getDimension(dimension)
-      .runCommand(command);
+    try {
+      return MC.world.getDimension(dimension).runCommand(command);
+    }
+    catch(error) {
+      return error;
+    }
   },
   execute: function(command, player, dimension = "overworld") {
-    return MC.world.getDimension(dimension)
-      .runCommand(`execute ${player} ~ ~ ~ ${command}`);
-  },
-  eval: function(func, player, dimension = "overworld") {
-    return MC.world.getDimension(dimension)
-      .runCommand(`execute ${player} ~ ~ ~ ${command}`);
+    try {
+      return MC.world.getDimension(dimension).runCommand(`execute ${player} ~ ~ ~ ${command}`);
+    }
+    catch(error){
+      return error;
+    }
   },
   tellraw: function(jsonMessage, player = "@a", dimension = "overworld") {
-    MC.world.getDimension(dimension)
-      .runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage));
+    MC.world.getDimension(dimension).runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage));
   },
   log: function(message, player = "@a", dimension = "overworld") {
     let jsonMessage = {
       "rawtext": [
         {
-          "text": "[Server][Log]§r " + message
+          "text": `§l[Server]§r ${message}`
         }
       ]
     }
-    MC.world.getDimension("overworld")
-      .runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
+    MC.world.getDimension("overworld").runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
   },
   echo: function(message, player = "@a", prefix = "", dimension = "overworld") {
     let jsonMessage = {
       "rawtext": [
         {
-          "text": prefix + message
+          "text": `${prefix}${message}`
         }
       ]
     }
-    MC.world.getDimension("overworld")
-      .runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
+    MC.world.getDimension("overworld").runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
   },
   error: function(message, player = "@a", dimension = "overworld") {
     let jsonMessage = {
       "rawtext": [
         {
-          "text": "[Server]§c§n[Error]§r " + message
+          "text": "§l§c§n[Error]§r " + message
         }
       ]
     }
-    MC.world.getDimension("overworld")
-      .runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
+    MC.world.getDimension("overworld").runCommand("tellraw " + player + " " + JSON.stringify(jsonMessage))
   },
   titleraw: function(type, jsonMessage, player = "@a", dimension = "overworld") {
     switch (type){
       case "reset":
-        MC.world.getDimension(dimension)
-          .runCommand(`titleraw ${player} ${type}`);
+        MC.world.getDimension(dimension).runCommand(`titleraw ${player} ${type}`);
         break;
       case "clear":
-        MC.world.getDimension(dimension)
-          .runCommand(`titleraw ${player} ${type}`);
+        MC.world.getDimension(dimension).runCommand(`titleraw ${player} ${type}`);
         break;
       default:
-        MC.world.getDimension(dimension)
-          .runCommand(`titleraw ${player} ${type} ${JSON.stringify(jsonMessage)}`);
+        MC.world.getDimension(dimension).runCommand(`titleraw ${player} ${type} ${JSON.stringify(jsonMessage)}`);
         break;
     }
   },
@@ -111,6 +109,10 @@ var Commands = {
     this.data = data;
     return this;
   },
+  setCancel(cancel){
+    this.cancel = cancel;
+    return this;
+  },
   regist: function(name, help, func){
     var n = name.split(" ");
     this.help[n[0]] = [];
@@ -135,9 +137,9 @@ var Commands = {
   trigger: function(key, func){
     this.trigger[key] = func;
     return this;
-  }
+  },
+  ui: ui
 }
-var Events = MC.world.events;
 
 MC.world.events.beforeChat.subscribe(function(event){
   const args = event.message.slice(1).split(" ");
@@ -158,5 +160,3 @@ MC.world.events.beforeChat.subscribe(function(event){
     }
   }
 });
-
-export { Commands, Events, MC, GT };
